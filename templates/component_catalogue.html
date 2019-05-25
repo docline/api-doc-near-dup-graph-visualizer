@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Title</title>
+</head>
+<script src="jquery-3.4.1.min.js"></script>
+<style>
+table {
+  border-collapse: collapse;
+}
+
+table, th, td {
+  border: 1px solid black;
+}
+</style>
+<body>
+    <table style="width: auto;">
+        <thead><th>#G</th><th class="r">Sample</th></thead>
+        <tbody>
+        {% for c in comps %}
+        <tr>
+            <td><a href="{{c['id']}}.html" target="bro_frame">{{c['power']}}</a></td>
+            <td class="r"><span style="font-weight: bold;">{{c['head']}}</span><hr/>{{c['sample']}}</td>
+        </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</body>
+<script>
+$(document).ready(()=>{
+    console.log($(window).innerWidth());
+    $('.r').width($(window).innerWidth() - 150);
+});
+</script>
+</html>

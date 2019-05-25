@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <title>Title</title>
+</head>
+<style>
+table, th, td {
+  border: none;
+}
+</style>
+<script src="jquery-3.4.1.min.js"></script>
+<body>
+    <table style="width: 100%;"><tr>
+        <td style="width: 50%;">
+            <iframe id="cat_frame" style="width: 100%;" src="catalogue.html"></iframe>
+        </td>
+        <td style="width: 50%;">
+            <iframe id="bro_frame" style="width: 100%;" name="bro_frame"></iframe>
+        </td>
+    </tr></table>
+</body>
+<script>
+$(document).ready(()=>{
+    $('#cat_frame, #bro_frame').height($(window).innerHeight() - 30);
+});
+</script>
+</html>

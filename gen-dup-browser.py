@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import glob
 import os
-from typing import List, Tuple, Set
+from typing import List, Tuple, Set, Iterable
 import argparse
 import json
 import jinja2
@@ -48,7 +48,7 @@ def load_graph(json_file: str, input_encoding: str) -> networkx.DiGraph:
         return gr
 
 
-def render_graph_component(component: networkx.Graph, output_dir: str):
+def render_graph_component(component: networkx.Graph, output_dir: str) -> None:
 
     rt = env.get_template("one_graph.html").render(
         nodes=[{
@@ -74,6 +74,19 @@ def render_graph_component(component: networkx.Graph, output_dir: str):
         print(rt, file=wh)
 
 
+def render_component_catalogue(components: Iterable[networkx.Graph], output_dir) -> None:
+    rt = env.get_template("component_catalogue.html").render(
+        comps = [{
+            'power': len(c), 'id': "%04d" % (min(n for n in c)),
+            'head': c.node[min(n for n in c)]['label'],
+            'sample': c.node[min(n for n in c)]['comment']
+        } for c in components]
+    )
+
+    with open(os.path.join(output_dir, "catalogue.html"), 'w', encoding='utf-8') as wh:
+        print(rt, file=wh)
+
+
 def get_components(gr: networkx.DiGraph) -> List[networkx.Graph]:
     comps = [gr.subgraph(c) for c in networkx.connected_components(networkx.Graph(gr))]
     comps.sort(key=len, reverse=True)
@@ -92,6 +105,8 @@ if __name__ == '__main__':
     components = get_components(graph)
 
     print(f"Largest component: {min(components[0])}")
+
+    render_component_catalogue(components, args.output__dir)
     print("Rendering components...")
     for comp in tqdm.tqdm(components):
         render_graph_component(comp, args.output__dir)
