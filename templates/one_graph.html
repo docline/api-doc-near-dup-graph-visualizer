@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 </head>
 
+<style>
+    .diffplus {
+        color: green;
+    }
+
+    .diffminus {
+        color: red;
+        text-decoration: line-through;
+    }
+</style>
 <script src="jquery-3.4.1.min.js"></script>
 <script src="d3.v4.min.js"></script>
 <script src="viz.js"></script>
@@ -12,26 +22,52 @@
 <body>
 <div id="graph" style="text-align: center; width: 100%; height: 50%;"></div>
 <div id="code" style="width: 100%; height: 50%; font-family: monospace;">
-    {{ codes }}
+  {% for c in codes %}
+    <span id="node_{{c['id']}}" class="snippet">
+        <code style="font-weight: bold;">{{c['header']}}</code><hr/>
+        <pre><code>{{c['body']}}</code></pre>
+    </span>
+  {% endfor %}
+
+  {% for d in diffs %}
+    <span id="diff_{{d['id1']}}_{{d['id2']}}" class="snippet">
+        <code style="font-weight: bold;">{{d['header1']}}</code>
+        <br/><span style="text-align: center; background: cyan;"> VS </span><br/>
+        <code style="font-weight: bold;">{{d['header2']}}</code>
+        <hr/>
+        <code>{{d['diff']}}</code>
+    </span>
+  {% endfor %}
+
+
 </div>
 </body>
 
 <script>
 $(document).ready(()=>{
+  $('.snippet').hide();
+
   d3.select("#graph").graphviz()
     .fade(false)
     .renderDot(`digraph G {
 
-{{ nodes }}
+  {% for n in nodes %}
+    node_{{ n['id'] }} [shape="rectangle", label="{{ n['label'] }}", href="#node_{{ n['id'] }}"];
+  {% endfor %}
 
-{{ edges }}
+  {% for e in edges %}
+    node_{{ e['u'] }} -> node_{{ e['v'] }} [label="diff", href="#diff_{{ e['u'] }}_{{ e['v'] }}"];
+  {% endfor %}
 
 }`);
 });
 
 
 $(window).on('hashchange', function() {
-  console.log(window.location.hash.substr(1));
+  let sid = window.location.hash;
+  console.log(sid);
+  $('.snippet').hide();
+  $(`${sid}`).show();
 });
 </script>
 

@@ -7,12 +7,12 @@ import argparse
 import json
 import jinja2
 import networkx
-import io
-import itertools
 import shutil
 import tqdm
+import worddiff
 
 __script_dir__ = os.path.dirname(os.path.realpath(__file__))
+env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates/'))
 
 def get_args() -> argparse.Namespace:
     p = argparse.ArgumentParser()
@@ -22,9 +22,8 @@ def get_args() -> argparse.Namespace:
     return p.parse_args()
 
 
-def html_diff(s1, s2):
-    # TODO: implement
-    return f"{s1} DIFF {s2}"
+def html_diff(s1: str, s2: str) -> str:
+    return worddiff.get_html(s1, s2)
 
 
 def load_graph(json_file: str, input_encoding: str) -> networkx.DiGraph:
@@ -44,36 +43,31 @@ def load_graph(json_file: str, input_encoding: str) -> networkx.DiGraph:
                     target_ids = [n for n, d in gr.nodes(data=True) if d['name'] == target_name]
                     if len(target_ids):
                         target_id = target_ids[0]
-                        gr.add_edge(source_id, target_id, diff=html_diff(
-                            gr.nodes[source_id]['comment'], gr.nodes[target_id]['comment']
-                        ))
+                        gr.add_edge(source_id, target_id)
 
         return gr
 
 
 def render_graph_component(component: networkx.Graph, output_dir: str):
-    nsio = io.StringIO()
-    esio = io.StringIO()
 
-    for n in component.nodes:
-        print(
-            f"""node_{n} [shape="rectangle", label="{component.nodes[n]['label']}", """
-            f"""href="#node_{n}"];""",
-            file=nsio
-        )
-
-    for u, v in component.edges:
-        print(
-            f"""node_{u} -> node_{v} [label="diff", """
-            f"""href="#edge_{u}_{v}"]; """,
-            file=esio
-        )
-
-    env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates/'))
     rt = env.get_template("one_graph.html").render(
-        nodes=str(nsio.getvalue()),
-        edges=str(esio.getvalue()),
-        codes="Nothing here yet"
+        nodes=[{
+            'id': n, 'label': component.nodes[n]['label']
+        } for n in component.nodes],
+
+        edges=[{
+            'u': u, 'v': v
+        } for u, v in component.edges],
+
+        codes=[{
+            'id':n, 'header': component.nodes[n]['name'], 'body': component.nodes[n]['comment']
+        } for n in component.nodes],
+
+        diffs=[{
+            'id1': u, 'header1': component.nodes[u]['name'], 'body1': component.nodes[u]['comment'],
+            'id2': v, 'header2': component.nodes[v]['name'], 'body2': component.nodes[v]['comment'],
+            'diff': html_diff(component.nodes[u]['comment'], component.nodes[v]['comment'])
+        } for u, v in component.edges]
     )
 
     with open(os.path.join(output_dir, "%04d.html" % min(component)), 'w', encoding='utf-8') as wh:
