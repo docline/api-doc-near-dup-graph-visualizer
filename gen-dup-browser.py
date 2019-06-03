@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import glob
 import os
-from typing import List, Tuple, Set, Iterable
+from typing import List, Tuple, Set, Iterable, Dict
 import argparse
 import json
 import jinja2
@@ -10,6 +10,8 @@ import networkx
 import shutil
 import tqdm
 import worddiff
+import collections
+import archetype_extraction
 
 __script_dir__ = os.path.dirname(os.path.realpath(__file__))
 env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates/'))
@@ -49,6 +51,8 @@ def load_graph(json_file: str, input_encoding: str) -> networkx.DiGraph:
 
 
 def render_graph_component(component: networkx.Graph, output_dir: str) -> None:
+    component_texts = [component.nodes[nd]['comment'] for nd in component.nodes]
+    archetype = ' '.join(archetype_extraction.possible_n_tuples_lcs(tuple(tuple(worddiff.words(sss)) for sss in component_texts)))
 
     rt = env.get_template("one_graph.html").render(
         nodes=[{
@@ -60,7 +64,8 @@ def render_graph_component(component: networkx.Graph, output_dir: str) -> None:
         } for u, v in component.edges],
 
         codes=[{
-            'id':n, 'header': component.nodes[n]['name'], 'body': component.nodes[n]['comment']
+            'id':n, 'header': component.nodes[n]['name'],
+            'body': html_diff(archetype, component.nodes[n]['comment'])
         } for n in component.nodes],
 
         diffs=[{
@@ -105,6 +110,13 @@ if __name__ == '__main__':
     components = get_components(graph)
 
     print(f"Largest component: {min(components[0])}")
+
+    size_stats = collections.defaultdict(lambda: 0)
+    for c in components:
+        size_stats[len(c)] += 1
+    print("Component size | count:")
+    for s in size_stats:
+        print(s, ':', size_stats[s])
 
     render_component_catalogue(components, args.output__dir)
     print("Rendering components...")

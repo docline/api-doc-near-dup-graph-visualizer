@@ -3,15 +3,16 @@
 
 import difflib
 import re
-import html
+from typing import List
 
 _wre = re.compile(r"\S+")
 
+def words(s: str)-> List[str]:
+    return re.findall(_wre, s)
+
 def _diff_words(s1, s2):
-    # words1 = [util.escape(w.strip()) for w in words1.split(' ') if w.strip() != ""]
-    # words2 = [w.strip() for w in words2.split(' ') if w.strip() != ""]
-    words1 = re.findall(_wre, s1)
-    words2 = re.findall(_wre, s2)
+    words1 = words(s1)
+    words2 = words(s2)
 
     # Timing: The basic Ratcliff-Obershelp algorithm is cubic time in the worst case and quadratic time in the expected case
     # https://docs.python.org/3/library/difflib.html#difflib.SequenceMatcher

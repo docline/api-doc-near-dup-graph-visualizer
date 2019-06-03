@@ -21,7 +21,11 @@ table, th, td {
         {% for c in comps %}
         <tr>
             <td><a href="{{c['id']}}.html" target="bro_frame">{{c['power']}}</a></td>
-            <td class="r"><span style="font-weight: bold;">{{c['head']}}</span><hr/><pre><code>{{c['sample']}}</code></pre></td>
+            <td class="r" style="background: {% if c['power'] > 1 %}white{% else %}yellow{% endif %};">
+                <span style="font-weight: bold;">
+                {{c['head']}}</span>
+                <hr/><pre><code>{{c['sample']}}</code></pre>
+            </td>
         </tr>
         {% endfor %}
         </tbody>
