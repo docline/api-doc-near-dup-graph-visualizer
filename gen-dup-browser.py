@@ -12,6 +12,7 @@ import tqdm
 import worddiff
 import collections
 import archetype_extraction
+import itertools
 
 __script_dir__ = os.path.dirname(os.path.realpath(__file__))
 env = jinja2.Environment(loader=jinja2.FileSystemLoader('templates/'))
@@ -25,7 +26,7 @@ def get_args() -> argparse.Namespace:
 
 
 def html_diff(s1: str, s2: str) -> str:
-    return worddiff.get_html(s1, s2)
+    return worddiff.get_html(s1.strip(), s2.strip())
 
 
 def load_graph(json_file: str, input_encoding: str) -> networkx.DiGraph:
@@ -33,12 +34,10 @@ def load_graph(json_file: str, input_encoding: str) -> networkx.DiGraph:
         digraph = json.load(jf)['digraph']
         gr = networkx.DiGraph()
 
-        limit = 500
-
-        for vertex, i in zip(digraph, range(limit)):
+        for vertex, i in zip(digraph, itertools.count()):
             gr.add_node(i, name=vertex['vertexName'], comment=vertex['comment'], label=vertex['vertexLabel'])
 
-        for source_vertex, source_id in zip(digraph, range(limit)):
+        for source_vertex, source_id in zip(digraph, itertools.count()):
             if 'children' in source_vertex:
                 for chi in source_vertex['children']:
                     target_name = chi['name']
@@ -56,7 +55,7 @@ def render_graph_component(component: networkx.Graph, output_dir: str) -> None:
 
     rt = env.get_template("one_graph.html").render(
         nodes=[{
-            'id': n, 'label': component.nodes[n]['label']
+            'id': n, 'label': component.nodes[n]['label'].strip()
         } for n in component.nodes],
 
         edges=[{
@@ -64,14 +63,14 @@ def render_graph_component(component: networkx.Graph, output_dir: str) -> None:
         } for u, v in component.edges],
 
         codes=[{
-            'id':n, 'header': component.nodes[n]['name'],
-            'body': html_diff(archetype, component.nodes[n]['comment'])
+            'id':n, 'header': component.nodes[n]['name'].strip(),
+            'body': html_diff(archetype, component.nodes[n]['comment'].strip())
         } for n in component.nodes],
 
         diffs=[{
-            'id1': u, 'header1': component.nodes[u]['name'], 'body1': component.nodes[u]['comment'],
-            'id2': v, 'header2': component.nodes[v]['name'], 'body2': component.nodes[v]['comment'],
-            'diff': html_diff(component.nodes[u]['comment'], component.nodes[v]['comment'])
+            'id1': u, 'header1': component.nodes[u]['name'].strip(), 'body1': component.nodes[u]['comment'].strip(),
+            'id2': v, 'header2': component.nodes[v]['name'].strip(), 'body2': component.nodes[v]['comment'].strip(),
+            'diff': html_diff(component.nodes[u]['comment'].strip(), component.nodes[v]['comment'].strip())
         } for u, v in component.edges]
     )
 
@@ -84,7 +83,7 @@ def render_component_catalogue(components: Iterable[networkx.Graph], output_dir)
         comps = [{
             'power': len(c), 'id': "%04d" % (min(n for n in c)),
             'head': c.node[min(n for n in c)]['label'],
-            'sample': c.node[min(n for n in c)]['comment']
+            'sample': c.node[min(n for n in c)]['comment'].strip()
         } for c in components]
     )
 
@@ -114,7 +113,7 @@ if __name__ == '__main__':
     size_stats = collections.defaultdict(lambda: 0)
     for c in components:
         size_stats[len(c)] += 1
-    print("Component size | count:")
+    print("Component size: count:")
     for s in size_stats:
         print(s, ':', size_stats[s])
 
