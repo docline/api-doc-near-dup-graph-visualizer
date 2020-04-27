@@ -82,8 +82,8 @@ def render_component_catalogue(components: Iterable[networkx.Graph], output_dir)
     rt = env.get_template("component_catalogue.html").render(
         comps = [{
             'power': len(c), 'id': "%04d" % (min(n for n in c)),
-            'head': c.node[min(n for n in c)]['label'],
-            'sample': c.node[min(n for n in c)]['comment'].strip()
+            'head': c.nodes[min(n for n in c)]['label'],
+            'sample': c.nodes[min(n for n in c)]['comment'].strip()
         } for c in components]
     )
 
